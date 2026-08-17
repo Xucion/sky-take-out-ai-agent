@@ -27,6 +27,7 @@ com\sky\entity\User.class
 com\sky\vo\DishOverViewVO$DishOverViewVOBuilder.class
 com\sky\dto\OrdersConfirmDTO.class
 com\sky\vo\UserLoginVO$UserLoginVOBuilder.class
+com\sky\dto\ShopAddressDTO.class
 com\sky\vo\DishVO$DishVOBuilder.class
 com\sky\dto\EmployeeDTO.class
 com\sky\entity\Category.class

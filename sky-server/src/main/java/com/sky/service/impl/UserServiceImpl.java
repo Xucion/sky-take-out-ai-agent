@@ -1,74 +1,79 @@
 package com.sky.service.impl;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.sky.constant.MessageConstant;
 import com.sky.dto.UserLoginDTO;
+import com.sky.dto.UserRegisterDTO;
 import com.sky.entity.User;
+import com.sky.exception.BaseException;
 import com.sky.exception.LoginFailedException;
 import com.sky.mapper.UserMapper;
-import com.sky.properties.WeChatProperties;
 import com.sky.service.UserService;
-import com.sky.utils.HttpClientUtil;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
-@Slf4j
 public class UserServiceImpl implements UserService {
 
-    public static final  String WX_LOGIN = "https://api.weixin.qq.com/sns/jscode2session";
-
-    @Autowired
-    private WeChatProperties weChatProperties;
     @Autowired
     private UserMapper userMapper;
-    /**
-     * 微信登录
-     * @param userLoginDTO
-     * @return
-     */
-    public User wxLogin(UserLoginDTO userLoginDTO) {
-        //调用微信接口服务，获得当前微信用户的openid
-        String openid = getOpenid(userLoginDTO.getCode());
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-        //判断openid是否为空，若为空，则登录失败，抛出业务异常
-        if(openid == null){
-            throw new LoginFailedException(MessageConstant.LOGIN_FAILED);
+    @Override
+    public User login(UserLoginDTO userLoginDTO) {
+        if (userLoginDTO == null || !isValidPhone(userLoginDTO.getPhone())
+                || !StringUtils.hasText(userLoginDTO.getPassword())) {
+            throw new LoginFailedException("请输入正确的手机号和密码");
         }
 
-        //若合法，判断当前微信用户是不是一个新的用户（对于外卖系统）
-        User user = userMapper.getByOpenid(openid);
-
-        //若是新用户，自动完成注册
-        if(user == null){
-            user = User.builder()
-                    .openid(openid)
-                    .createTime(LocalDateTime.now())
-                    .build();
-
-            userMapper.insert(user);
+        User user = userMapper.getByPhone(userLoginDTO.getPhone());
+        if (user == null) {
+            throw new LoginFailedException(MessageConstant.ACCOUNT_NOT_FOUND);
         }
-        //返回这个用户对象
+        if (!StringUtils.hasText(user.getPassword())
+                || !passwordEncoder.matches(userLoginDTO.getPassword(), user.getPassword())) {
+            throw new LoginFailedException(MessageConstant.PASSWORD_ERROR);
+        }
         return user;
     }
 
-    private String getOpenid(String code){
-        Map<String, String> map = new HashMap<>();
-        map.put("appid",weChatProperties.getAppid());
-        map.put("secret",weChatProperties.getSecret());
-        map.put("js_code",code);
-        map.put("grant_type","authorization_code");
-        String json = HttpClientUtil.doGet(WX_LOGIN, map);
+    @Override
+    public User register(UserRegisterDTO userRegisterDTO) {
+        if (userRegisterDTO == null || !isValidPhone(userRegisterDTO.getPhone())) {
+            throw new BaseException("请输入正确的11位手机号");
+        }
+        if (!StringUtils.hasText(userRegisterDTO.getPassword())
+                || userRegisterDTO.getPassword().length() < 6
+                || userRegisterDTO.getPassword().length() > 32) {
+            throw new BaseException("密码长度应为6到32位");
+        }
+        if (userMapper.getByPhone(userRegisterDTO.getPhone()) != null) {
+            throw new BaseException("该手机号已注册");
+        }
 
-        JSONObject jsonObject = JSON.parseObject(json);
-        String openid = jsonObject.getString("openid");
-        return openid;
+        String name = StringUtils.hasText(userRegisterDTO.getName())
+                ? userRegisterDTO.getName().trim()
+                : "新用户" + userRegisterDTO.getPhone().substring(7);
+        if (name.length() > 32) {
+            throw new BaseException("昵称不能超过32个字符");
+        }
+
+        User user = User.builder()
+                .name(name)
+                .phone(userRegisterDTO.getPhone())
+                .password(passwordEncoder.encode(userRegisterDTO.getPassword()))
+                .createTime(LocalDateTime.now())
+                .build();
+        userMapper.insert(user);
+        return user;
+    }
+
+    private boolean isValidPhone(String phone) {
+        return StringUtils.hasText(phone) && phone.matches("^1\\d{10}$");
     }
 }

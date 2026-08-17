@@ -2,6 +2,7 @@ package com.sky.controller.user;
 
 import com.sky.constant.JwtClaimsConstant;
 import com.sky.dto.UserLoginDTO;
+import com.sky.dto.UserRegisterDTO;
 import com.sky.entity.User;
 import com.sky.properties.JwtProperties;
 import com.sky.result.Result;
@@ -33,30 +34,47 @@ public class UserController {
     private JwtProperties jwtProperties;
 
     /**
-     * 微信用户登录
+     * 网页端用户登录
      * @param userLoginDTO
      * @return
      */
     @PostMapping("/login")
-    @ApiOperation("微信用户登录")
+    @ApiOperation("手机号密码登录")
     public Result<UserLoginVO> login(@RequestBody UserLoginDTO userLoginDTO) {
-        log.info("微信用户登录：{}", userLoginDTO.getCode());
+        log.info("网页用户登录：{}", userLoginDTO.getPhone());
 
-        //微信登录
-        User user = userService.wxLogin(userLoginDTO);
+        User user = userService.login(userLoginDTO);
 
-        //微信用户生成jwt令牌
+        //生成用户 JWT 令牌
         Map<String, Object> claims = new HashMap<>();
         claims.put(JwtClaimsConstant.USER_ID,user.getId());
         String token = JwtUtil.createJWT(jwtProperties.getUserSecretKey(), jwtProperties.getUserTtl(), claims);
 
         UserLoginVO userLoginVO = UserLoginVO.builder()
                 .id(user.getId())
-                .openid(user.getOpenid())
+                .name(user.getName())
+                .phone(user.getPhone())
                 .token(token)
                 .build();
         return Result.success(userLoginVO);
+    }
 
+    @PostMapping("/register")
+    @ApiOperation("手机号密码注册")
+    public Result<UserLoginVO> register(@RequestBody UserRegisterDTO userRegisterDTO) {
+        log.info("网页用户注册：{}", userRegisterDTO.getPhone());
+        User user = userService.register(userRegisterDTO);
+
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(JwtClaimsConstant.USER_ID, user.getId());
+        String token = JwtUtil.createJWT(jwtProperties.getUserSecretKey(), jwtProperties.getUserTtl(), claims);
+
+        return Result.success(UserLoginVO.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .phone(user.getPhone())
+                .token(token)
+                .build());
     }
 
 }

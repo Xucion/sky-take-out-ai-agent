@@ -27,6 +27,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
@@ -62,7 +63,10 @@ public class OrderServiceImpl implements OrderService {
     private WebSocketServer webSocketServer;
 
     @Value("${sky.shop.address}")
-    private String shopAddress;
+    private String defaultShopAddress;
+
+    @Autowired
+    private ShopMapper shopMapper;
 
     @Value("${sky.baidu.ak}")
     private String ak;
@@ -533,7 +537,11 @@ public class OrderServiceImpl implements OrderService {
      */
     private void checkOutOfRange(String address) {
         Map map = new HashMap();
-        map.put("address",shopAddress);
+        String shopAddress = shopMapper.getAddress();
+        if (!StringUtils.hasText(shopAddress)) {
+            shopAddress = defaultShopAddress;
+        }
+        map.put("address", shopAddress);
         map.put("output","json");
         map.put("ak",ak);
 

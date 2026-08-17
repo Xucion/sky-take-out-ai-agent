@@ -23,7 +23,12 @@ public class OssConfiguration {
                 minioProperties.getAccessKey(),
                 minioProperties.getSecretKey(),
                 minioProperties.getBucketName());
-        minioUtil.setPublicReadPolicy();
+        try {
+            minioUtil.setPublicReadPolicy();
+        } catch (IllegalStateException exception) {
+            // 文件服务不可用不应阻止点餐、登录等核心接口启动。
+            log.warn("MinIO 当前不可用，文件上传功能将暂时不可用：{}", exception.getMessage());
+        }
         return minioUtil;
     }
 }
