@@ -4,6 +4,7 @@ import com.github.pagehelper.Page;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.entity.Orders;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
@@ -38,6 +39,14 @@ public interface OrderMapper {
      */
     @Select("select * from orders where id=#{id}")
     Orders getById(Long id);
+
+    /**
+     * AI客服按当前用户查询订单进度，只返回回答进度所需的字段。
+     */
+    @Select("select id, status, estimated_delivery_time, delivery_time " +
+            "from orders where id = #{orderId} and user_id = #{userId}")
+    Orders getProgressByIdAndUserId(@Param("orderId") Long orderId,
+                                    @Param("userId") Long userId);
 
     /**
      * 根据状态统计订单数量

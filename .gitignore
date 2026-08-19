@@ -5,3 +5,8 @@
 *Test.java
 **/test/
 sky-server/src/main/resources/application-dev.yml
+
+# Track automated server tests while keeping legacy manual integration samples ignored.
+!sky-server/src/test/
+!sky-server/src/test/**
+sky-server/src/test/java/com/sky/test/
