@@ -106,7 +106,6 @@ import { UserModule } from '@/store/modules/user'
 import Breadcrumb from '@/components/Breadcrumb/index.vue'
 import Hamburger from '@/components/Hamburger/index.vue'
 import { getStatus, setStatus, getShopAddress, setShopAddress } from '@/api/users'
-import Cookies from 'js-cookie'
 import { debounce, throttle } from '@/utils/common'
 import { setNewData, getNewData } from '@/utils/cookies'
 
@@ -158,9 +157,7 @@ export default class SkyComponent extends Vue {
   }
 
   get name() {
-    return (UserModule.userInfo as any).name
-      ? (UserModule.userInfo as any).name
-      : JSON.parse(Cookies.get('user_info') as any).name
+    return (UserModule.userInfo as any).name || UserModule.username
   }
 
   get getStoreId() {

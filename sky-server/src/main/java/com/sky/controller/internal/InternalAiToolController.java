@@ -2,8 +2,10 @@ package com.sky.controller.internal;
 
 import com.sky.context.AiRequestContext;
 import com.sky.service.AiOrderProgressService;
+import com.sky.service.AiShopStatusService;
 import com.sky.vo.ai.AiToolResponse;
 import com.sky.vo.ai.OrderProgressVO;
+import com.sky.vo.ai.ShopStatusVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class InternalAiToolController {
 
     private final AiOrderProgressService orderProgressService;
+    private final AiShopStatusService shopStatusService;
+
+    /**
+     * 查询当前门店营业状态。即使该信息与用户无关，也沿用双 JWT 鉴权，避免形成公开旁路。
+     */
+    @GetMapping("/shop/status")
+    public ResponseEntity<AiToolResponse<ShopStatusVO>> getShopStatus() {
+        String traceId = AiRequestContext.getTraceId();
+        return ResponseEntity.ok(AiToolResponse.success(shopStatusService.getShopStatus(), traceId));
+    }
 
     /**
      * 查询当前认证用户的一笔订单进度。

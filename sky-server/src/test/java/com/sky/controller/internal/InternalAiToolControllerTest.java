@@ -5,6 +5,8 @@ import com.sky.constant.JwtClaimsConstant;
 import com.sky.interceptor.AiInternalAuthInterceptor;
 import com.sky.properties.AiInternalAuthProperties;
 import com.sky.service.AiOrderProgressService;
+import com.sky.service.AiShopStatusService;
+import com.sky.vo.ai.ShopStatusVO;
 import com.sky.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,11 +31,13 @@ class InternalAiToolControllerTest {
     private static final String USER_SECRET = "user-context-secret-for-ai-tests-123456";
 
     private AiOrderProgressService orderProgressService;
+    private AiShopStatusService shopStatusService;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         orderProgressService = mock(AiOrderProgressService.class);
+        shopStatusService = mock(AiShopStatusService.class);
 
         AiInternalAuthProperties properties = new AiInternalAuthProperties();
         properties.setServiceSecretKey(SERVICE_SECRET);
@@ -41,11 +45,24 @@ class InternalAiToolControllerTest {
 
         AiInternalAuthInterceptor interceptor =
                 new AiInternalAuthInterceptor(properties, new ObjectMapper());
-        InternalAiToolController controller = new InternalAiToolController(orderProgressService);
+        InternalAiToolController controller = new InternalAiToolController(orderProgressService, shopStatusService);
 
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .addInterceptors(interceptor)
                 .build();
+    }
+
+    @Test
+    void returnsAuthenticatedShopStatus() throws Exception {
+        when(shopStatusService.getShopStatus()).thenReturn(
+                ShopStatusVO.builder().status("OPEN").statusText("营业中").build());
+
+        mockMvc.perform(get("/internal/ai-tools/shop/status")
+                        .header("Authorization", "Bearer " + serviceToken())
+                        .header("X-AI-User-Context", userContextToken(1L, "conv-shop")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("OPEN"));
     }
 
     @Test

@@ -10,3 +10,7 @@ sky-server/src/main/resources/application-dev.yml
 !sky-server/src/test/
 !sky-server/src/test/**
 sky-server/src/test/java/com/sky/test/
+
+# The independent AI service has its own automated test suite.
+!sky-ai-service/src/test/
+!sky-ai-service/src/test/**

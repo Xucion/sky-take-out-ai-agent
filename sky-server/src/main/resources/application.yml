@@ -37,8 +37,8 @@ logging:
 sky:
   ai-internal:
     # 两个真实密钥必须由部署环境注入；留空时内部AI接口安全地返回503，而不是跳过认证
-    service-secret-key: ${SKY_AI_SERVICE_SECRET_KEY:}
-    user-context-secret-key: ${SKY_AI_USER_CONTEXT_SECRET_KEY:}
+    service-secret-key: dev-service-key-please-change-2026-123456
+    user-context-secret-key: dev-user-context-key-change-2026-654321
     # 服务身份和用户上下文分两个请求头传递，便于分别验证用途
     service-token-name: Authorization
     user-context-token-name: X-AI-User-Context

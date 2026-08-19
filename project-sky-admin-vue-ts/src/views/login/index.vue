@@ -3,7 +3,7 @@
     <div class="login-box">
       <img src="@/assets/login/login-l.png" alt="" />
       <div class="login-form">
-        <el-form ref="loginForm" :model="loginForm" :rules="loginRules">
+        <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules">
           <div class="login-form-title">
             <img
               src="@/assets/login/icon_logo.png"
@@ -51,71 +51,56 @@
   </div>
 </template>
 
-<script lang="ts">
-import { Options as Component, Vue, Watch } from 'vue-property-decorator'
-import { RouteLocationNormalized } from 'vue-router'
-import type { FormInstance as ElForm } from 'element-plus'
+<script setup lang="ts">
+import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import type { FormInstance, FormRules } from 'element-plus'
 import { UserModule } from '@/store/modules/user'
-import { isValidUsername } from '@/utils/validate'
 
-@Component({
-  name: 'Login',
+const router = useRouter()
+const loginFormRef = ref<FormInstance>()
+const loading = ref(false)
+
+const loginForm = reactive({
+  username: 'admin',
+  password: '123456',
 })
-export default class SkyComponent extends Vue {
-  private validateUsername = (rule: any, value: string, callback: Function) => {
-    if (!value) {
-      callback(new Error('请输入用户名'))
-    } else {
-      callback()
+
+const validateUsername = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
+  if (!value) {
+    callback(new Error('请输入用户名'))
+  } else {
+    callback()
+  }
+}
+
+const validatePassword = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
+  if (value.length < 6) {
+    callback(new Error('密码必须在6位以上'))
+  } else {
+    callback()
+  }
+}
+
+const loginRules: FormRules = {
+  username: [{ validator: validateUsername, trigger: 'blur' }],
+  password: [{ validator: validatePassword, trigger: 'blur' }],
+}
+
+const handleLogin = async () => {
+  if (!loginFormRef.value) return
+
+  const valid = await loginFormRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  loading.value = true
+  try {
+    const res: any = await UserModule.Login(loginForm)
+    if (String(res.code) === '1') {
+      await router.push('/')
     }
-  }
-  private validatePassword = (rule: any, value: string, callback: Function) => {
-    if (value.length < 6) {
-      callback(new Error('密码必须在6位以上'))
-    } else {
-      callback()
-    }
-  }
-  private loginForm = {
-    username: 'admin',
-    password: '123456',
-  } as {
-    username: String
-    password: String
-  }
-
-  loginRules = {
-    username: [{ validator: this.validateUsername, trigger: 'blur' }],
-    password: [{ validator: this.validatePassword, trigger: 'blur' }],
-  }
-  private loading = false
-  private redirect?: string
-
-  @Watch('$route', { immediate: true })
-  private onRouteChange(route: RouteLocationNormalized) {}
-
-  // 登录
-  private handleLogin() {
-    ;(this.$refs.loginForm as ElForm).validate(async (valid: boolean) => {
-      if (valid) {
-        this.loading = true
-        await UserModule.Login(this.loginForm as any)
-          .then((res: any) => {
-            if (String(res.code) === '1') {
-              this.$router.push('/')
-            } else {
-              // this.$message.error(res.msg)
-              this.loading = false
-            }
-          })
-          .catch(() => {
-            // this.$message.error('用户名或密码错误！')
-            this.loading = false
-          })
-      } else {
-        return false
-      }
-    })
+  } finally {
+    loading.value = false
   }
 }
 </script>

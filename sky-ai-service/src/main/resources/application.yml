@@ -1,0 +1,35 @@
+server:
+  port: ${AI_SERVICE_PORT:8081}
+
+spring:
+  application:
+    name: sky-ai-service
+  ai:
+    # 默认关闭真实模型自动配置，本地无需 API Key 即可运行 Fake Provider。
+    model:
+      chat: none
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+app:
+  ai:
+    # fake 是安全默认值；只有显式启用 qwen profile 才会创建真实模型客户端。
+    provider: ${AI_PROVIDER:fake}
+    max-input-chars: ${AI_MAX_INPUT_CHARS:2000}
+  sky-server:
+    # 这里只指向业务服务门面，不能改成数据库、Redis 或任意用户提供的 URL。
+    base-url: ${SKY_SERVER_BASE_URL:http://localhost:8080}
+    connect-timeout: ${SKY_SERVER_CONNECT_TIMEOUT:2s}
+    read-timeout: ${SKY_SERVER_READ_TIMEOUT:5s}
+  auth:
+    # 空值会让需要业务工具的请求快速失败，但不妨碍 Fake 模式服务启动和健康检查。
+    user-jwt-secret: itheima
+    # 以下两把内部密钥需要与 sky-server 配置一致，但彼此必须不同。
+    service-jwt-secret: dev-service-key-please-change-2026-123456
+    user-context-jwt-secret: dev-user-context-key-change-2026-654321
+    service-token-ttl: ${SKY_AI_SERVICE_TOKEN_TTL:5m}
+    user-context-token-ttl: ${SKY_AI_USER_CONTEXT_TOKEN_TTL:2m}

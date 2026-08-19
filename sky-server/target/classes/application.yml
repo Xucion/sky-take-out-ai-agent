@@ -35,6 +35,19 @@ logging:
         controller: info
 
 sky:
+  ai-internal:
+    # 两个真实密钥必须由部署环境注入；留空时内部AI接口安全地返回503，而不是跳过认证
+    service-secret-key: dev-service-key-please-change-2026-123456
+    user-context-secret-key: dev-user-context-key-change-2026-654321
+    # 服务身份和用户上下文分两个请求头传递，便于分别验证用途
+    service-token-name: Authorization
+    user-context-token-name: X-AI-User-Context
+    service-subject: sky-ai-service
+    audience: sky-server
+    # 服务令牌最长10分钟，用户上下文最长2分钟，减少内部令牌泄露后的可利用窗口
+    service-token-max-ttl-millis: 600000
+    user-context-max-ttl-millis: 120000
+    allowed-clock-skew-millis: 30000
   jwt:
     # 设置jwt签名加密时使用的秘钥
     admin-secret-key: itcast

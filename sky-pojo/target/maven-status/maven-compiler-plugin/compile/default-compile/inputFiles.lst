@@ -5,6 +5,7 @@ D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\dto\SetmealDTO.java
 D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\dto\OrdersPaymentDTO.java
 D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\vo\OrderVO.java
 D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\dto\CategoryDTO.java
+D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\dto\UserRegisterDTO.java
 D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\dto\OrdersPageQueryDTO.java
 D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\vo\TurnoverReportVO.java
 D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\dto\OrdersRejectionDTO.java
@@ -14,6 +15,7 @@ D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\entity\OrderDetail.java
 D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\entity\Employee.java
 D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\vo\EmployeeLoginVO.java
 D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\vo\SetmealVO.java
+D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\dto\ShopAddressDTO.java
 D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\dto\GoodsSalesDTO.java
 D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\vo\DishVO.java
 D:\code\sky-take-out\sky-pojo\src\main\java\com\sky\vo\OrderOverViewVO.java

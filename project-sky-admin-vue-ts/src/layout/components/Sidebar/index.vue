@@ -61,7 +61,6 @@ import { UserModule } from '@/store/modules/user'
 import SidebarItem from './SidebarItem.vue'
 import variables from '@/styles/variables'
 import { getSidebarStatus, setSidebarStatus } from '@/utils/cookies'
-import Cookies from 'js-cookie'
 @Component({
   name: 'SideBar',
   components: {
@@ -71,9 +70,7 @@ import Cookies from 'js-cookie'
 export default class SkyComponent extends Vue {
   private restKey: number = 0
   get name() {
-    return (UserModule.userInfo as any).name
-      ? (UserModule.userInfo as any).name
-      : JSON.parse(Cookies.get('user_info') as any).name
+    return (UserModule.userInfo as any).name || UserModule.username
   }
   get defOpen() {
     // const urlArr = this.$route.path.split('/')

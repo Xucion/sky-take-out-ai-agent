@@ -1,0 +1,16 @@
+spring:
+  ai:
+    model:
+      chat: openai
+    openai:
+      # DashScope/Qwen 提供 OpenAI-compatible API，因此复用 Spring AI OpenAI 适配器。
+      base-url: ${AI_MODEL_BASE_URL:https://dashscope.aliyuncs.com/compatible-mode/v1}
+      # 不提供默认 Key，启用 qwen profile 却未配置密钥时应直接启动失败。
+      api-key: ${AI_API_KEY}
+      chat:
+        options:
+          model: ${AI_CHAT_MODEL:qwen-plus}
+
+app:
+  ai:
+    provider: qwen

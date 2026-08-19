@@ -20,9 +20,25 @@ export const removeToken = () => Cookies.remove(tokenKey);
 // userInfo
 
 const userInfoKey = 'userInfo';
-export const getUserInfo = () => Cookies.get(userInfoKey);
-export const setUserInfo = (useInfor: Object) => Cookies.set(userInfoKey, useInfor);
-export const removeUserInfo = () => Cookies.remove(userInfoKey);
+const legacyUserInfoKey = 'user_info';
+export const getUserInfo = () => {
+  const value = Cookies.get(userInfoKey) || Cookies.get(legacyUserInfoKey);
+  if (!value) return null;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+};
+export const setUserInfo = (userInfo: object) => {
+  Cookies.set(userInfoKey, JSON.stringify(userInfo));
+  Cookies.remove(legacyUserInfoKey);
+};
+export const removeUserInfo = () => {
+  Cookies.remove(userInfoKey);
+  Cookies.remove(legacyUserInfoKey);
+};
 
 // printinfo
 

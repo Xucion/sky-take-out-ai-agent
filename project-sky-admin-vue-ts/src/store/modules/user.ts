@@ -23,7 +23,7 @@ class User extends VuexModule implements IUserState {
   // @ts-ignore
   public storeId: string = getStoreId() || ''
   public introduction = ''
-  public userInfo = {}
+  public userInfo = getUserInfo() || {}
   public roles: string[] = []
   public username = Cookies.get('username') || ''
 
@@ -84,7 +84,7 @@ class User extends VuexModule implements IUserState {
       this.SET_TOKEN(data.data.token)
       setToken(data.data.token)
       this.SET_USERINFO(data.data)
-      Cookies.set('user_info', data.data)
+      setUserInfo(data.data)
       return data
     } else {
       return Message.error(data.msg)
@@ -112,7 +112,7 @@ class User extends VuexModule implements IUserState {
       throw Error('GetUserInfo: token is undefined!')
     }
 
-    const data = JSON.parse(<string>getUserInfo()) //  { roles: ['admin'], name: 'zhangsan', avatar: '/login', introduction: '' }
+    const data = getUserInfo() //  { roles: ['admin'], name: 'zhangsan', avatar: '/login', introduction: '' }
     if (!data) {
       throw Error('Verification failed, please Login again.')
     }
@@ -137,7 +137,6 @@ class User extends VuexModule implements IUserState {
     this.SET_TOKEN('')
     this.SET_ROLES([])
     Cookies.remove('username')
-    Cookies.remove('user_info')
     removeUserInfo()
   }
 }
