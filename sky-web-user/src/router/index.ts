@@ -12,6 +12,7 @@ const router = createRouter({
     { path: '/addresses/:id', component: () => import('../views/AddressEditView.vue') },
     { path: '/orders', component: () => import('../views/OrdersView.vue') },
     { path: '/orders/:id', component: () => import('../views/OrderDetailView.vue') },
+    { path: '/support', component: () => import('../views/CustomerServiceView.vue') },
     { path: '/profile', component: () => import('../views/ProfileView.vue') },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],

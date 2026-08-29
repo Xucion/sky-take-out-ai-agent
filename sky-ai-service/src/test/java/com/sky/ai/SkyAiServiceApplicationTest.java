@@ -3,11 +3,13 @@ package com.sky.ai;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest(
+        webEnvironment = SpringBootTest.WebEnvironment.NONE,
+        properties = "spring.flyway.enabled=false")
 class SkyAiServiceApplicationTest {
 
     @Test
     void startsWithFakeProviderAndWithoutExternalModelKey() {
-        // 默认配置必须允许开发者在没有模型 Key、数据库和 Redis 的情况下启动服务。
+        // 轻量启动测试不连接模型、数据库或 Redis；数据库迁移由隔离的容器测试覆盖。
     }
 }

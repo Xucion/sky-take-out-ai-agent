@@ -2,9 +2,33 @@ server:
   port: ${AI_SERVICE_PORT:8081}
 
 spring:
+  profiles:
+    # 默认离线 Fake；真实模型必须显式设置 SPRING_PROFILES_ACTIVE=qwen。
+    active: ${SPRING_PROFILES_ACTIVE:fake}
   application:
     name: sky-ai-service
+  datasource:
+    url: ${AI_DB_URL:jdbc:mysql://localhost:3306/sky_take_out?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${AI_DB_USERNAME:root}
+    # 不提供仓库内默认密码；开发、测试和生产环境都必须从外部注入。
+    password: ${AI_DB_PASSWORD:2628}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: ${AI_DB_MAX_POOL_SIZE:5}
+      minimum-idle: ${AI_DB_MIN_IDLE:1}
+      connection-timeout: ${AI_DB_CONNECTION_TIMEOUT_MS:3000}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    # sky_take_out 是已有业务库。首次由 Flyway 接管时临时开启 baseline-on-migrate，
+    # 以版本 0 建立基线后继续执行 V1；完成接管后应关闭该开关。
+    baseline-version: 0
+    baseline-on-migrate: ${AI_FLYWAY_BASELINE_ON_MIGRATE:false}
+    validate-on-migrate: true
   ai:
+    tools:
+      # 业务工具失败必须向上抛出，不能把内部异常文本交给模型自由改写。
+      throw-exception-on-error: true
     # 默认关闭真实模型自动配置，本地无需 API Key 即可运行 Fake Provider。
     model:
       chat: none

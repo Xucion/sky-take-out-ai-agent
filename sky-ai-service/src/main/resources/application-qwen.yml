@@ -9,7 +9,7 @@ spring:
       api-key: ${AI_API_KEY}
       chat:
         options:
-          model: ${AI_CHAT_MODEL:qwen-plus}
+          model: ${AI_CHAT_MODEL:qwen3.7-plus}
 
 app:
   ai:

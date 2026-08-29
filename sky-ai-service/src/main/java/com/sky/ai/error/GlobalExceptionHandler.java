@@ -2,11 +2,13 @@ package com.sky.ai.error;
 
 import com.sky.ai.api.TraceIds;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -26,6 +28,13 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiError> handleValidation(MethodArgumentNotValidException ex,
                                                HttpServletRequest request) {
         // 不回显具体字段值，避免恶意输入或敏感内容被写入统一错误响应。
+        return ResponseEntity.badRequest()
+                .body(new ApiError("INVALID_ARGUMENT", "请求参数不完整或格式不正确", traceId(request)));
+    }
+
+    @ExceptionHandler({ConstraintViolationException.class, HandlerMethodValidationException.class})
+    ResponseEntity<ApiError> handleConstraintValidation(Exception ex,
+                                                        HttpServletRequest request) {
         return ResponseEntity.badRequest()
                 .body(new ApiError("INVALID_ARGUMENT", "请求参数不完整或格式不正确", traceId(request)));
     }

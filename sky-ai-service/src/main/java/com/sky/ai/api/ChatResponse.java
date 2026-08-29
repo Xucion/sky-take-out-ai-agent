@@ -4,5 +4,8 @@ public record ChatResponse(String answer,
                            String intent,
                            String toolUsed,
                            String provider,
-                           String traceId) {
+                           String traceId,
+                           String userMessageId,
+                           String assistantMessageId,
+                           boolean replayed) {
 }

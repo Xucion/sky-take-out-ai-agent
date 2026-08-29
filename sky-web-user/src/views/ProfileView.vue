@@ -12,7 +12,7 @@ function logout() { if(!window.confirm('确定退出登录吗？'))return; auth.
   <main class="page narrow profile-page">
     <section class="profile-hero"><div class="mini-logo">SKY</div><div class="avatar">{{ auth.profile?.name?.slice(0,1) || '食' }}</div><h1>{{ auth.profile?.name || '苍穹用户' }}</h1><p>{{ auth.profile?.phone }}</p></section>
     <div class="content profile-content">
-      <section class="card quick"><RouterLink to="/orders"><strong>全部订单</strong><span>查看历史点餐记录 ›</span></RouterLink><RouterLink to="/addresses"><strong>收货地址</strong><span>管理常用地址 ›</span></RouterLink></section>
+      <section class="card quick"><RouterLink to="/orders"><strong>全部订单</strong><span>查看历史点餐记录 ›</span></RouterLink><RouterLink to="/addresses"><strong>收货地址</strong><span>管理常用地址 ›</span></RouterLink><RouterLink to="/support"><strong>智能客服</strong><span>查询营业状态和订单进度 ›</span></RouterLink></section>
       <section class="card service"><h2>更多服务</h2><a href="tel:400-000-0000"><span>☎</span><div><b>联系商家</b><small>遇到问题，打电话问问</small></div><i>›</i></a><div class="service-row"><span>◉</span><div><b>关于苍穹外卖</b><small>新鲜、准时、认真做饭</small></div></div></section>
       <button class="logout" @click="logout">退出登录</button>
     </div>
