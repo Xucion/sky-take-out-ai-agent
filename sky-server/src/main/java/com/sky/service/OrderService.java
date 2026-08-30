@@ -7,7 +7,6 @@ import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersRejectionDTO;
 import com.sky.dto.OrdersSubmitDTO;
 import com.sky.result.PageResult;
-import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderVO;
 import com.sky.vo.OrderSubmitVO;
@@ -25,7 +24,7 @@ public interface OrderService {
      * @param ordersPaymentDTO
      * @return
      */
-    OrderPaymentVO payment(OrdersPaymentDTO ordersPaymentDTO) throws Exception;
+    void payment(OrdersPaymentDTO ordersPaymentDTO);
 
     /**
      * 用户端订单分页查询
@@ -47,7 +46,7 @@ public interface OrderService {
      * 用户取消订单
      * @param id
      */
-    void userCancelById(Long id) throws Exception;
+    void userCancelById(Long id);
 
     /**
      * 再来一单
@@ -81,14 +80,14 @@ public interface OrderService {
      *
      * @param ordersRejectionDTO
      */
-    void rejection(OrdersRejectionDTO ordersRejectionDTO) throws Exception;
+    void rejection(OrdersRejectionDTO ordersRejectionDTO);
 
     /**
      * 商家取消订单
      *
      * @param ordersCancelDTO
      */
-    void cancel(OrdersCancelDTO ordersCancelDTO) throws Exception;
+    void cancel(OrdersCancelDTO ordersCancelDTO);
 
     /**
      * 派送订单

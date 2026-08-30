@@ -57,7 +57,7 @@ public class Orders implements Serializable {
     //结账时间
     private LocalDateTime checkoutTime;
 
-    //支付方式 1微信，2支付宝
+    //支付方式标识（当前为演示在线支付）
     private Integer payMethod;
 
     //支付状态 0未支付 1已支付 2退款

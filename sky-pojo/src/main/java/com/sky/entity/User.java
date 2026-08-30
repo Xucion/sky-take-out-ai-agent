@@ -19,9 +19,6 @@ public class User implements Serializable {
 
     private Long id;
 
-    //微信用户唯一标识
-    private String openid;
-
     //姓名
     private String name;
 

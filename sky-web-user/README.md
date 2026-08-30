@@ -1,6 +1,6 @@
 # 苍穹外卖网页用户端
 
-独立于微信小程序的浏览器点餐端，使用 Vue 3、TypeScript、Vite、Pinia 和 Axios。
+浏览器点餐端，使用 Vue 3、TypeScript、Vite、Pinia 和 Axios。
 
 ## 启动
 

@@ -7,7 +7,6 @@ import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.OrderService;
 import com.sky.vo.OrderVO;
-import com.sky.vo.OrderPaymentVO;
 import com.sky.vo.OrderSubmitVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -46,11 +45,11 @@ public class OrderController {
      */
     @PutMapping("/payment")
     @ApiOperation("订单支付")
-    public Result<OrderPaymentVO> payment(@RequestBody OrdersPaymentDTO ordersPaymentDTO) throws Exception {
+    public Result payment(@RequestBody OrdersPaymentDTO ordersPaymentDTO) {
         log.info("订单支付：{}", ordersPaymentDTO);
-        OrderPaymentVO orderPaymentVO = orderService.payment(ordersPaymentDTO);
-        log.info("生成预支付交易单：{}", orderPaymentVO);
-        return Result.success(orderPaymentVO);
+        orderService.payment(ordersPaymentDTO);
+        log.info("模拟支付完成：{}", ordersPaymentDTO.getOrderNumber());
+        return Result.success();
     }
 
     /**
@@ -88,7 +87,7 @@ public class OrderController {
      */
     @PutMapping("/cancel/{id}")
     @ApiOperation("取消订单")
-    public Result cancel(@PathVariable("id") Long id) throws Exception {
+    public Result cancel(@PathVariable("id") Long id) {
         orderService.userCancelById(id);
         return Result.success();
     }

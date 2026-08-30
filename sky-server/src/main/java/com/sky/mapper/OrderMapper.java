@@ -62,7 +62,7 @@ public interface OrderMapper {
     void update(Orders orders);
 
     /**
-     * 用于替换微信支付更新数据库状态的问题
+     * 根据订单号更新订单状态
      * @param orderStatus
      * @param orderPaidStatus
      */

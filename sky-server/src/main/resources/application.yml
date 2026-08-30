@@ -63,9 +63,6 @@ sky:
     access-key: ${sky.minio.access-key}
     secret-key: ${sky.minio.secret-key}
     bucket-name: ${sky.minio.bucket-name}
-  wechat:
-    appid: ${sky.wechat.appid}
-    secret: ${sky.wechat.secret}
   shop:
     address: ${sky.shop.address}
   baidu:

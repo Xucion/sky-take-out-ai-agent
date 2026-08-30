@@ -374,9 +374,7 @@
               </div>
               <div class="pay-type">
                 <span class="pay-name">支付渠道：</span>
-                <span class="pay-value">{{
-                  diaForm.payMethod === 1 ? '微信支付' : '支付宝支付'
-                }}</span>
+                <span class="pay-value">在线支付（演示）</span>
               </div>
               <div class="pay-time">
                 <span class="pay-name">支付时间：</span>

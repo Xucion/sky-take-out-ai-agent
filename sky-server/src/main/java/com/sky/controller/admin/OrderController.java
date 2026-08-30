@@ -84,7 +84,7 @@ public class OrderController {
      */
     @PutMapping("/rejection")
     @ApiOperation("拒单")
-    public Result rejection(@RequestBody OrdersRejectionDTO ordersRejectionDTO) throws Exception {
+    public Result rejection(@RequestBody OrdersRejectionDTO ordersRejectionDTO) {
         orderService.rejection(ordersRejectionDTO);
         return Result.success();
     }
@@ -96,7 +96,7 @@ public class OrderController {
      */
     @PutMapping("/cancel")
     @ApiOperation("取消订单")
-    public Result cancel(@RequestBody OrdersCancelDTO ordersCancelDTO) throws Exception {
+    public Result cancel(@RequestBody OrdersCancelDTO ordersCancelDTO) {
         orderService.cancel(ordersCancelDTO);
         return Result.success();
     }

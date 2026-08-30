@@ -19,6 +19,22 @@
 - 提供带稳定事件 ID、幂等回放和 `Last-Event-ID` 续传的最小 SSE 消息接口；
 - 尚未包含模型原生 Token 流、反馈、人工工单和跨轮模型上下文组装。
 
+## 代码结构
+
+生产代码按业务功能组织，避免 Controller、Service、Repository 全局分层后相互交叉引用：
+
+```text
+com.sky.ai
+├─ SkyAiServiceApplication       # Spring Boot 启动入口
+├─ common                       # 配置、异常和双 JWT 身份桥接
+├─ conversation                 # 会话 API、应用服务与持久化
+├─ chat                         # 普通聊天、SSE 协议和接口模型
+└─ agent                        # Agent 编排、意图、策略、模型 Provider 和业务工具
+```
+
+同一功能内高度相关的小型请求、响应和事件统一放在 `ConversationModels`、`ChatModels`、
+`ChatStreamEvent`、`PolicyTypes` 和 `ToolModels` 中，独立业务组件仍保持单一职责类。
+
 ## 本地运行
 
 先启动 MySQL 和 `sky-server`，并配置 AI 数据源及两个服务一致的三个密钥：

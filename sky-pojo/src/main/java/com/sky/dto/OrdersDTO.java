@@ -30,7 +30,7 @@ public class OrdersDTO implements Serializable {
     //结账时间
     private LocalDateTime checkoutTime;
 
-    //支付方式 1微信，2支付宝
+    //支付方式标识（当前为演示在线支付）
     private Integer payMethod;
 
     //实收金额
