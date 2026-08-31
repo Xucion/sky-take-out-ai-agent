@@ -23,10 +23,10 @@ public class IntentPipeline {
     }
 
     /**
-     * 根据输入消息和显式参数识别确定性规则结果。
+     * 根据输入消息识别确定性规则结果。
      */
-    public RuleMatch recognize(String message, Long explicitOrderId) {
-        return ruleRecognizer.recognize(message, explicitOrderId);
+    public RuleMatch recognize(String message) {
+        return ruleRecognizer.recognize(message);
     }
 
     /**
@@ -41,7 +41,8 @@ public class IntentPipeline {
                 userId, conversationId, beforeSequence);
 
         if (rule.intent() == CustomerIntent.REFUND_REQUEST
-                || rule.intent() == CustomerIntent.SHOP_STATUS_QUERY) {
+                || rule.intent() == CustomerIntent.SHOP_STATUS_QUERY
+                || rule.intent() == CustomerIntent.DISH_RECOMMENDATION) {
             return result(rule.intent(), rule.confidence(),
                     ResolutionSource.RULE, rule.orderId(), context);
         }
@@ -59,7 +60,6 @@ public class IntentPipeline {
             return result(CustomerIntent.ORDER_PROGRESS_QUERY, 0.88,
                     ResolutionSource.CONTEXT, context.relatedOrderId(), context);
         }
-
         // 前两层无法确定时交给 LLM；会话订单只作为受控候选槽位，不视为已确认意图。
         return result(CustomerIntent.UNKNOWN, 0.0, ResolutionSource.LLM,
                 context.relatedOrderId(), context);

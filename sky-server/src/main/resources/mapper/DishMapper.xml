@@ -56,5 +56,36 @@
         </set>
         where id = #{id}
     </update>
+
+    <select id="listRecommendationCandidates" resultType="com.sky.vo.ai.DishRecommendationCandidateVO">
+        select d.id as dish_id,
+               d.name,
+               d.category_id,
+               d.price,
+               p.spicy_level,
+               p.sweetness_level,
+               p.oiliness_level,
+               cast(p.tags as char) as tags_json,
+               cast(p.allergens as char) as allergens_json,
+               (select df.value
+                from dish_flavor df
+                where df.dish_id = d.id and df.name = '辣度'
+                order by df.id asc
+                limit 1) as flavor_options_json
+        from dish d
+        inner join dish_profile p on p.dish_id = d.id
+        where d.status = 1
+        <if test="minPrice != null">
+            and d.price &gt;= #{minPrice}
+        </if>
+        <if test="maxPrice != null">
+            and d.price &lt;= #{maxPrice}
+        </if>
+        <if test="categoryId != null">
+            and d.category_id = #{categoryId}
+        </if>
+        order by d.id asc
+        limit 500
+    </select>
 </mapper>
 

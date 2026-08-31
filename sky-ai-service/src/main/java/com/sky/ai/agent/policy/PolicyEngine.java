@@ -26,6 +26,11 @@ public class PolicyEngine {
         if (resolution.intent() == CustomerIntent.SHOP_STATUS_QUERY) {
             return allow(PolicyTypes.AiCapability.GET_SHOP_STATUS);
         }
+        if (resolution.intent() == CustomerIntent.DISH_RECOMMENDATION) {
+            return new PolicyTypes.PolicyDecision(PolicyTypes.PolicyAction.ALLOW_AGENT,
+                    Set.of(PolicyTypes.AiCapability.RECOMMEND_DISHES,
+                            PolicyTypes.AiCapability.RECOMMEND_MEAL_COMBO), null, null);
+        }
         if (resolution.intent() == CustomerIntent.ORDER_PROGRESS_QUERY) {
             if (resolution.orderId() == null) {
                 return new PolicyTypes.PolicyDecision(PolicyTypes.PolicyAction.REQUIRE_PARAMETER, Set.of(),
@@ -35,7 +40,8 @@ public class PolicyEngine {
             return allow(PolicyTypes.AiCapability.GET_ORDER_PROGRESS);
         }
 
-        EnumSet<PolicyTypes.AiCapability> fallback = EnumSet.of(PolicyTypes.AiCapability.GET_SHOP_STATUS);
+        EnumSet<PolicyTypes.AiCapability> fallback = EnumSet.of(
+                PolicyTypes.AiCapability.GET_SHOP_STATUS);
         if (resolution.orderId() != null) {
             fallback.add(PolicyTypes.AiCapability.GET_ORDER_PROGRESS);
         }

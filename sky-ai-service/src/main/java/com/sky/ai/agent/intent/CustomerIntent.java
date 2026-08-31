@@ -6,6 +6,7 @@ package com.sky.ai.agent.intent;
 public enum CustomerIntent {
     SHOP_STATUS_QUERY("SHOP_STATUS"),
     ORDER_PROGRESS_QUERY("ORDER_PROGRESS"),
+    DISH_RECOMMENDATION("DISH_RECOMMENDATION"),
     REFUND_REQUEST("REFUND_REQUEST"),
     UNKNOWN("GENERAL");
 

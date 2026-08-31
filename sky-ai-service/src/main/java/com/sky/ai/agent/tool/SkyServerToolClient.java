@@ -22,6 +22,10 @@ public class SkyServerToolClient {
             new ParameterizedTypeReference<>() { };
     private static final ParameterizedTypeReference<ToolModels.ToolResponse<ToolModels.OrderProgress>> ORDER_TYPE =
             new ParameterizedTypeReference<>() { };
+    private static final ParameterizedTypeReference<ToolModels.ToolResponse<ToolModels.DishRecommendationResult>>
+            RECOMMENDATION_TYPE = new ParameterizedTypeReference<>() { };
+    private static final ParameterizedTypeReference<ToolModels.ToolResponse<ToolModels.MealComboRecommendationResult>>
+            MEAL_COMBO_TYPE = new ParameterizedTypeReference<>() { };
 
     private final RestClient restClient;
     private final IdentityBridgeService identityBridge;
@@ -59,6 +63,30 @@ public class SkyServerToolClient {
     }
 
     /**
+     * 调用业务服务按结构化条件推荐当前可售菜品。
+     */
+    public ToolModels.ToolResponse<ToolModels.DishRecommendationResult> recommendDishes(
+            ToolModels.DishRecommendationRequest request,
+            UserIdentity identity,
+            String conversationId,
+            String traceId) {
+        InternalAuthTokens tokens = identityBridge.issueInternalTokens(identity, conversationId);
+        return post("/internal/ai-tools/catalog/dish-recommendations",
+                request, tokens, traceId, RECOMMENDATION_TYPE);
+    }
+
+    /** 调用业务服务生成满足总预算和人数约束的整餐组合。 */
+    public ToolModels.ToolResponse<ToolModels.MealComboRecommendationResult> recommendMealCombo(
+            ToolModels.MealComboRecommendationRequest request,
+            UserIdentity identity,
+            String conversationId,
+            String traceId) {
+        InternalAuthTokens tokens = identityBridge.issueInternalTokens(identity, conversationId);
+        return post("/internal/ai-tools/catalog/meal-combinations",
+                request, tokens, traceId, MEAL_COMBO_TYPE);
+    }
+
+    /**
      * 携带内部身份令牌执行受控 GET 请求。
      */
     private <T> ToolModels.ToolResponse<T> get(String uri, InternalAuthTokens tokens, String traceId,
@@ -86,6 +114,42 @@ public class SkyServerToolClient {
             }
             if (ex.getStatusCode().value() == 401 || ex.getStatusCode().value() == 403) {
                 // 内部鉴权失败通常是部署配置问题，不应误导终端用户重新登录。
+                throw new AiServiceException(HttpStatus.SERVICE_UNAVAILABLE,
+                        "INTERNAL_AUTH_FAILED", "客服内部鉴权失败，请联系管理员检查配置");
+            }
+            throw unavailable();
+        } catch (RestClientException ex) {
+            throw unavailable();
+        }
+    }
+
+    /**
+     * 携带内部身份令牌执行受控 POST 请求。
+     */
+    private <T> ToolModels.ToolResponse<T> post(String uri,
+                                               Object body,
+                                               InternalAuthTokens tokens,
+                                               String traceId,
+                                               ParameterizedTypeReference<ToolModels.ToolResponse<T>> type) {
+        try {
+            ToolModels.ToolResponse<T> response = restClient.post()
+                    .uri(uri)
+                    .header("Authorization", "Bearer " + tokens.serviceToken())
+                    .header("X-AI-User-Context", tokens.userContextToken())
+                    .header("X-Trace-Id", traceId)
+                    .body(body)
+                    .retrieve()
+                    .body(type);
+            if (response == null) {
+                throw unavailable();
+            }
+            return response;
+        } catch (RestClientResponseException ex) {
+            if (ex.getStatusCode().value() == 400) {
+                throw new AiServiceException(HttpStatus.BAD_REQUEST,
+                        "INVALID_RECOMMENDATION_PREFERENCES", "菜品推荐条件不正确，请调整后重试");
+            }
+            if (ex.getStatusCode().value() == 401 || ex.getStatusCode().value() == 403) {
                 throw new AiServiceException(HttpStatus.SERVICE_UNAVAILABLE,
                         "INTERNAL_AUTH_FAILED", "客服内部鉴权失败，请联系管理员检查配置");
             }

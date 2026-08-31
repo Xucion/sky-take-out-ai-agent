@@ -15,7 +15,6 @@ import { useToastStore } from '../stores/toast'
 
 interface SendAttempt {
   message: string
-  orderId?: number
   clientRequestId: string
   lastEventId?: string
   serverFailed: boolean
@@ -36,7 +35,6 @@ const conversations = ref<AiConversation[]>([])
 const activeConversationId = ref('')
 const messages = ref<UiMessage[]>([])
 const input = ref('')
-const orderIdInput = ref('')
 const loading = ref(true)
 const sending = ref(false)
 const historyEl = ref<HTMLElement | null>(null)
@@ -121,14 +119,8 @@ function useQuickQuestion(question: string) {
 async function send() {
   const text = input.value.trim()
   if (!text || !canSend.value) return
-  const parsedOrderId = orderIdInput.value.trim() ? Number(orderIdInput.value) : undefined
-  if (parsedOrderId !== undefined && (!Number.isSafeInteger(parsedOrderId) || parsedOrderId <= 0)) {
-    toast.show('请输入正确的订单 ID')
-    return
-  }
   const attempt: SendAttempt = {
     message: text,
-    orderId: parsedOrderId,
     clientRequestId: requestId(),
     serverFailed: false,
   }
@@ -138,7 +130,6 @@ async function send() {
     { key: `${localId}-assistant`, role: 'ASSISTANT', content: '', status: 'PENDING', attempt },
   )
   input.value = ''
-  orderIdInput.value = ''
   await scrollToBottom()
   await runAttempt(attempt, `${localId}-assistant`)
 }
@@ -165,7 +156,6 @@ async function runAttempt(attempt: SendAttempt, assistantKey: string) {
     await streamAiMessage({
       conversationId: activeConversationId.value,
       message: attempt.message,
-      orderId: attempt.orderId,
       clientRequestId: attempt.clientRequestId,
       lastEventId: attempt.lastEventId,
       signal: activeAbort.signal,
@@ -275,10 +265,6 @@ onBeforeUnmount(() => {
     </section>
 
     <section class="composer">
-      <div class="order-field">
-        <label for="order-id">订单 ID（查询订单时填写）</label>
-        <input id="order-id" v-model="orderIdInput" inputmode="numeric" maxlength="19" placeholder="例如 88" :disabled="sending" />
-      </div>
       <div class="compose-row">
         <textarea v-model="input" maxlength="2000" rows="1" :disabled="sending"
                   placeholder="请输入你的问题…" @keydown="handleComposerKeydown"></textarea>
@@ -291,5 +277,5 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.support-page{height:100vh;display:grid;grid-template-rows:auto auto 1fr auto;background:linear-gradient(180deg,#fff8f1 0,#f7f5f2 30%);overflow:hidden;padding-bottom:calc(68px + env(safe-area-inset-bottom))}.support-header{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:11px;padding:14px 16px;background:rgba(255,255,255,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(14px)}.agent-mark,.message-avatar{display:grid;place-items:center;background:linear-gradient(145deg,#ff7a43,#e94c1d);color:#fff;font-weight:900;box-shadow:0 7px 18px rgba(232,73,27,.2)}.agent-mark{width:44px;height:44px;border-radius:15px;font-size:14px}.support-header h1{font-size:18px;margin:0 0 4px}.support-header p{font-size:10px;color:var(--muted);margin:0}.support-header p i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:5px}.new-chat{border:1px solid #ffd5c4;background:#fff7f1;color:var(--orange-dark);border-radius:999px;padding:8px 11px;font-size:11px;font-weight:800}.new-chat:disabled{opacity:.45}.conversation-bar{display:flex;align-items:center;gap:8px;padding:8px 16px;background:#fff;border-bottom:1px solid var(--line)}.conversation-bar label{font-size:11px;color:var(--muted);white-space:nowrap}.conversation-bar select{min-width:0;flex:1;border:0;background:#f8f5f2;border-radius:9px;padding:8px 10px;font-size:11px;color:var(--ink);outline:none}.chat-history{overflow-y:auto;padding:18px 16px 24px;scroll-behavior:smooth}.chat-loading{text-align:center;color:var(--muted);padding:60px 0}.welcome-card{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:15px;background:#fff;border:1px solid #f1e6dc;border-radius:17px;box-shadow:0 8px 24px rgba(70,45,25,.06);margin-bottom:14px}.welcome-card>span{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:#fff0e6;color:var(--orange-dark);font-size:18px}.welcome-card strong{font-size:14px}.welcome-card p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.6}.quick-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}.quick-list button{border:1px solid #eadfd6;background:#fff;color:#685f59;border-radius:999px;padding:9px 12px;font-size:12px}.message-row{display:flex;align-items:flex-end;gap:8px;margin:13px 0}.message-row.user{justify-content:flex-end}.message-avatar{width:28px;height:28px;border-radius:10px;font-size:9px;flex:0 0 auto}.bubble{max-width:78%;background:#fff;border-radius:6px 17px 17px 17px;padding:11px 13px;box-shadow:0 6px 18px rgba(60,40,25,.06);font-size:14px;line-height:1.65;overflow-wrap:anywhere}.user .bubble{background:linear-gradient(145deg,#ff7840,#e95022);color:#fff;border-radius:17px 6px 17px 17px;box-shadow:0 7px 18px rgba(232,73,27,.16)}.bubble p{white-space:pre-wrap;margin:0}.bubble.failed{border:1px solid #f2bbb3;background:#fff7f5}.bubble footer{display:flex;align-items:center;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid #f3d8d3;color:#bb4b3e;font-size:10px}.bubble footer span{flex:1}.bubble footer button{border:0;border-radius:999px;background:#ffe5df;color:#bd3f31;padding:5px 10px;font-weight:800}.typing{display:flex;gap:4px;padding:5px}.typing i{width:6px;height:6px;border-radius:50%;background:#c4bbb4;animation:pulse 1.2s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}@keyframes pulse{0%,70%,100%{opacity:.3;transform:translateY(0)}35%{opacity:1;transform:translateY(-3px)}}.composer{background:rgba(255,255,255,.97);border-top:1px solid var(--line);padding:9px 13px 10px;box-shadow:0 -8px 24px rgba(50,35,25,.05)}.order-field{display:flex;align-items:center;gap:8px;margin-bottom:7px}.order-field label{font-size:10px;color:var(--muted);white-space:nowrap}.order-field input{min-width:0;flex:1;border:0;background:#f7f4f1;border-radius:8px;padding:6px 9px;font-size:11px;outline:none}.compose-row{display:grid;grid-template-columns:1fr 42px;gap:8px;align-items:end}.compose-row textarea{width:100%;max-height:96px;resize:none;border:1px solid var(--line);border-radius:16px;background:#faf9f8;padding:11px 13px;outline:none;line-height:1.4}.compose-row textarea:focus{border-color:var(--orange)}.send-button{width:42px;height:42px;border:0;border-radius:14px;background:linear-gradient(145deg,#ff7840,#e94b1d);color:#fff;font-size:23px;font-weight:900;box-shadow:0 7px 16px rgba(232,73,27,.22)}.send-button:disabled{opacity:.38;box-shadow:none}.composer>p{text-align:center;margin:6px 0 0;color:#aaa;font-size:9px}
+.support-page{height:100vh;display:grid;grid-template-rows:auto auto 1fr auto;background:linear-gradient(180deg,#fff8f1 0,#f7f5f2 30%);overflow:hidden;padding-bottom:calc(68px + env(safe-area-inset-bottom))}.support-header{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:11px;padding:14px 16px;background:rgba(255,255,255,.94);border-bottom:1px solid var(--line);backdrop-filter:blur(14px)}.agent-mark,.message-avatar{display:grid;place-items:center;background:linear-gradient(145deg,#ff7a43,#e94c1d);color:#fff;font-weight:900;box-shadow:0 7px 18px rgba(232,73,27,.2)}.agent-mark{width:44px;height:44px;border-radius:15px;font-size:14px}.support-header h1{font-size:18px;margin:0 0 4px}.support-header p{font-size:10px;color:var(--muted);margin:0}.support-header p i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:5px}.new-chat{border:1px solid #ffd5c4;background:#fff7f1;color:var(--orange-dark);border-radius:999px;padding:8px 11px;font-size:11px;font-weight:800}.new-chat:disabled{opacity:.45}.conversation-bar{display:flex;align-items:center;gap:8px;padding:8px 16px;background:#fff;border-bottom:1px solid var(--line)}.conversation-bar label{font-size:11px;color:var(--muted);white-space:nowrap}.conversation-bar select{min-width:0;flex:1;border:0;background:#f8f5f2;border-radius:9px;padding:8px 10px;font-size:11px;color:var(--ink);outline:none}.chat-history{overflow-y:auto;padding:18px 16px 24px;scroll-behavior:smooth}.chat-loading{text-align:center;color:var(--muted);padding:60px 0}.welcome-card{display:grid;grid-template-columns:34px 1fr;gap:10px;padding:15px;background:#fff;border:1px solid #f1e6dc;border-radius:17px;box-shadow:0 8px 24px rgba(70,45,25,.06);margin-bottom:14px}.welcome-card>span{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:#fff0e6;color:var(--orange-dark);font-size:18px}.welcome-card strong{font-size:14px}.welcome-card p{margin:5px 0 0;color:var(--muted);font-size:12px;line-height:1.6}.quick-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}.quick-list button{border:1px solid #eadfd6;background:#fff;color:#685f59;border-radius:999px;padding:9px 12px;font-size:12px}.message-row{display:flex;align-items:flex-end;gap:8px;margin:13px 0}.message-row.user{justify-content:flex-end}.message-avatar{width:28px;height:28px;border-radius:10px;font-size:9px;flex:0 0 auto}.bubble{max-width:78%;background:#fff;border-radius:6px 17px 17px 17px;padding:11px 13px;box-shadow:0 6px 18px rgba(60,40,25,.06);font-size:14px;line-height:1.65;overflow-wrap:anywhere}.user .bubble{background:linear-gradient(145deg,#ff7840,#e95022);color:#fff;border-radius:17px 6px 17px 17px;box-shadow:0 7px 18px rgba(232,73,27,.16)}.bubble p{white-space:pre-wrap;margin:0}.bubble.failed{border:1px solid #f2bbb3;background:#fff7f5}.bubble footer{display:flex;align-items:center;gap:10px;margin-top:8px;padding-top:8px;border-top:1px solid #f3d8d3;color:#bb4b3e;font-size:10px}.bubble footer span{flex:1}.bubble footer button{border:0;border-radius:999px;background:#ffe5df;color:#bd3f31;padding:5px 10px;font-weight:800}.typing{display:flex;gap:4px;padding:5px}.typing i{width:6px;height:6px;border-radius:50%;background:#c4bbb4;animation:pulse 1.2s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}@keyframes pulse{0%,70%,100%{opacity:.3;transform:translateY(0)}35%{opacity:1;transform:translateY(-3px)}}.composer{background:rgba(255,255,255,.97);border-top:1px solid var(--line);padding:9px 13px 10px;box-shadow:0 -8px 24px rgba(50,35,25,.05)}.compose-row{display:grid;grid-template-columns:1fr 42px;gap:8px;align-items:end}.compose-row textarea{width:100%;max-height:96px;resize:none;border:1px solid var(--line);border-radius:16px;background:#faf9f8;padding:11px 13px;outline:none;line-height:1.4}.compose-row textarea:focus{border-color:var(--orange)}.send-button{width:42px;height:42px;border:0;border-radius:14px;background:linear-gradient(145deg,#ff7840,#e94b1d);color:#fff;font-size:23px;font-weight:900;box-shadow:0 7px 16px rgba(232,73,27,.22)}.send-button:disabled{opacity:.38;box-shadow:none}.composer>p{text-align:center;margin:6px 0 0;color:#aaa;font-size:9px}
 </style>

@@ -24,10 +24,10 @@ public class RuleIntentRecognizer {
     );
 
     /**
-     * 根据输入消息和显式参数识别确定性规则结果。
+     * 根据输入消息识别确定性规则结果。
      */
-    public RuleMatch recognize(String message, Long explicitOrderId) {
-        Long orderId = resolveOrderId(message, explicitOrderId);
+    public RuleMatch recognize(String message) {
+        Long orderId = resolveOrderId(message);
         String normalized = message.toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
 
         // 规则层只覆盖高精度表达；未命中交给上下文和 LLM 层。
@@ -38,6 +38,13 @@ public class RuleIntentRecognizer {
         if (containsAny(normalized, "营业", "开门", "打烊", "关门")) {
             return new RuleMatch(RuleMatchStatus.MATCHED,
                     CustomerIntent.SHOP_STATUS_QUERY, 0.99, orderId);
+        }
+        if (containsAny(normalized, "推荐菜", "菜品推荐", "推荐一下", "推荐点", "吃什么",
+                "想吃", "吃点", "来点", "有什么菜", "预算", "控制在", "元以内", "微辣", "中辣", "重辣",
+                "别太辣", "不要太辣", "不辣", "不要甜", "过敏", "下饭", "清淡",
+                "总预算", "单个菜", "每个菜", "一道菜", "单菜", "人均", "每人")) {
+            return new RuleMatch(RuleMatchStatus.MATCHED,
+                    CustomerIntent.DISH_RECOMMENDATION, 0.97, null);
         }
         if (orderId != null || containsAny(normalized,
                 "订单", "配送", "送到", "进度", "到哪")) {
@@ -50,9 +57,9 @@ public class RuleIntentRecognizer {
     }
 
     /**
-     * 合并显式订单编号与文本中提取的订单编号。
+     * 从用户消息中提取唯一、有效的订单编号。
      */
-    private Long resolveOrderId(String message, Long explicitOrderId) {
+    private Long resolveOrderId(String message) {
         Set<Long> extractedIds = new LinkedHashSet<>();
         for (Pattern pattern : ORDER_ID_PATTERNS) {
             Matcher matcher = pattern.matcher(message);
@@ -72,13 +79,7 @@ public class RuleIntentRecognizer {
             throw new AiServiceException(HttpStatus.BAD_REQUEST,
                     "AMBIGUOUS_ORDER_ID", "检测到多个订单 ID，请明确指定需要查询的一个订单");
         }
-        Long extractedOrderId = extractedIds.stream().findFirst().orElse(null);
-        if (explicitOrderId != null && extractedOrderId != null
-                && !explicitOrderId.equals(extractedOrderId)) {
-            throw new AiServiceException(HttpStatus.BAD_REQUEST,
-                    "ORDER_ID_CONFLICT", "填写的订单 ID 与问题中的订单 ID 不一致");
-        }
-        return explicitOrderId != null ? explicitOrderId : extractedOrderId;
+        return extractedIds.stream().findFirst().orElse(null);
     }
 
     /**

@@ -18,7 +18,9 @@ public final class PolicyTypes {
      */
     public enum AiCapability {
         GET_SHOP_STATUS,
-        GET_ORDER_PROGRESS
+        GET_ORDER_PROGRESS,
+        RECOMMEND_DISHES,
+        RECOMMEND_MEAL_COMBO
     }
 
     /**

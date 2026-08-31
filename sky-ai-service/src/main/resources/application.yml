@@ -25,6 +25,14 @@ spring:
     baseline-version: 0
     baseline-on-migrate: ${AI_FLYWAY_BASELINE_ON_MIGRATE:false}
     validate-on-migrate: true
+  data:
+    redis:
+      host: ${AI_REDIS_HOST:localhost}
+      port: ${AI_REDIS_PORT:6379}
+      password: ${AI_REDIS_PASSWORD:}
+      database: ${AI_REDIS_DATABASE:1}
+      connect-timeout: ${AI_REDIS_CONNECT_TIMEOUT:1s}
+      timeout: ${AI_REDIS_TIMEOUT:1s}
   ai:
     tools:
       # 业务工具失败必须向上抛出，不能把内部异常文本交给模型自由改写。
@@ -40,6 +48,12 @@ management:
         include: health,info
 
 app:
+  order:
+    # 缺少订单 ID 的澄清状态是短期上下文，查询成功后会立即清除。
+    context-ttl: ${AI_ORDER_CONTEXT_TTL:30m}
+  recommendation:
+    # 会话推荐偏好是短期上下文，不会自动转成长期用户画像。
+    context-ttl: ${AI_RECOMMENDATION_CONTEXT_TTL:30m}
   ai:
     # fake 是安全默认值；只有显式启用 qwen profile 才会创建真实模型客户端。
     provider: ${AI_PROVIDER:fake}

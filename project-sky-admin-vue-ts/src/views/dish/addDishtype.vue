@@ -19,6 +19,8 @@
           <el-form-item label="菜品分类:"
                         prop="categoryId">
             <el-select v-model="ruleForm.categoryId"
+                       class="dish-form-select"
+                       :teleported="false"
                        placeholder="请选择菜品分类">
               <el-option v-for="(item, index) in dishList"
                          :key="index"
@@ -32,6 +34,84 @@
                         prop="price">
             <el-input v-model="ruleForm.price"
                       placeholder="请设置菜品价格" />
+          </el-form-item>
+        </div>
+        <div>
+          <el-form-item label="推荐辣度:">
+            <el-select v-model="ruleForm.profile.spicyLevel"
+                       class="dish-form-select"
+                       :teleported="false">
+              <el-option v-for="item in levelOptions"
+                         :key="`spicy-${item.value}`"
+                         :label="item.label"
+                         :value="item.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="推荐甜度:">
+            <el-select v-model="ruleForm.profile.sweetnessLevel"
+                       class="dish-form-select"
+                       :teleported="false">
+              <el-option v-for="item in levelOptions"
+                         :key="`sweet-${item.value}`"
+                         :label="item.label"
+                         :value="item.value" />
+            </el-select>
+          </el-form-item>
+        </div>
+        <div>
+          <el-form-item label="咸度等级:">
+            <el-select v-model="ruleForm.profile.saltinessLevel"
+                       class="dish-form-select"
+                       :teleported="false">
+              <el-option v-for="item in levelOptions"
+                         :key="`salt-${item.value}`"
+                         :label="item.label"
+                         :value="item.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="油腻程度:">
+            <el-select v-model="ruleForm.profile.oilinessLevel"
+                       class="dish-form-select"
+                       :teleported="false">
+              <el-option v-for="item in levelOptions"
+                         :key="`oil-${item.value}`"
+                         :label="item.label"
+                         :value="item.value" />
+            </el-select>
+          </el-form-item>
+        </div>
+        <div>
+          <el-form-item label="推荐标签:">
+            <el-select v-model="ruleForm.profile.tags"
+                       class="profile-label-select"
+                       multiple
+                       filterable
+                       allow-create
+                       default-first-option
+                       :reserve-keyword="false"
+                       :teleported="false"
+                       placeholder="选择或输入标签后回车">
+              <el-option v-for="item in profileTagOptions"
+                         :key="`tag-${item}`"
+                         :label="item"
+                         :value="item" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="过敏原:">
+            <el-select v-model="ruleForm.profile.allergens"
+                       class="profile-label-select"
+                       multiple
+                       filterable
+                       allow-create
+                       default-first-option
+                       :reserve-keyword="false"
+                       :teleported="false"
+                       placeholder="选择或输入过敏原后回车">
+              <el-option v-for="item in profileAllergenOptions"
+                         :key="`allergen-${item}`"
+                         :label="item"
+                         :value="item" />
+            </el-select>
           </el-form-item>
         </div>
         <el-form-item label="口味做法配置:">
@@ -157,6 +237,21 @@ export default class SkyComponent extends Vue {
   private vueRest = '1'
   private index = 0
   private inputStyle = { flex: 1 }
+  private levelOptions = [
+    { value: 0, label: '0 - 无' },
+    { value: 1, label: '1 - 低' },
+    { value: 2, label: '2 - 中' },
+    { value: 3, label: '3 - 高' },
+    { value: 4, label: '4 - 很高' }
+  ]
+  private knownProfileTags = [
+    '川味', '下饭', '肉类', '素食', '清淡', '低油', '高蛋白', '低卡',
+    '热菜', '凉菜', '汤类', '鱼类', '蔬菜', '主食', '饮料'
+  ]
+  private knownProfileAllergens = [
+    '花生', '坚果', '牛奶', '乳制品', '鸡蛋', '海鲜', '虾', '蟹',
+    '鱼', '大豆', '小麦', '芝麻', '含麸质谷物'
+  ]
   private headers = {
     token: getToken()
   }
@@ -169,7 +264,16 @@ export default class SkyComponent extends Vue {
     description: '',
     dishFlavors: [],
     status: true,
-    categoryId: ''
+    categoryId: '',
+    profile: {
+      spicyLevel: 0,
+      sweetnessLevel: 0,
+      saltinessLevel: 0,
+      oilinessLevel: 0,
+      calorieLevel: null,
+      tags: [],
+      allergens: []
+    }
   }
 
   get rules() {
@@ -222,6 +326,26 @@ export default class SkyComponent extends Vue {
     }
   }
 
+  /**
+   * 合并预设标签与当前菜品已有标签，确保自定义标签可以正常回显。
+   */
+  get profileTagOptions() {
+    return Array.from(new Set([
+      ...this.knownProfileTags,
+      ...(this.ruleForm.profile.tags || [])
+    ]))
+  }
+
+  /**
+   * 合并预设过敏原与当前菜品已有过敏原，确保自定义值可以正常回显。
+   */
+  get profileAllergenOptions() {
+    return Array.from(new Set([
+      ...this.knownProfileAllergens,
+      ...(this.ruleForm.profile.allergens || [])
+    ]))
+  }
+
   created() {
     this.getDishList()
     // 口味临时数据
@@ -261,9 +385,23 @@ export default class SkyComponent extends Vue {
   private async init() {
     queryDishById(this.$route.query.id).then(res => {
       if (res && res.data && res.data.code === 1) {
-        this.ruleForm = { ...res.data.data }
-        this.ruleForm.price = String(res.data.data.price)
-        this.ruleForm.status = res.data.data.status == '1'
+        const data = res.data.data
+        const profile = data.profile || {}
+        this.ruleForm = {
+          ...this.ruleForm,
+          ...data,
+          profile: {
+            spicyLevel: profile.spicyLevel ?? 0,
+            sweetnessLevel: profile.sweetnessLevel ?? 0,
+            saltinessLevel: profile.saltinessLevel ?? 0,
+            oilinessLevel: profile.oilinessLevel ?? 0,
+            calorieLevel: profile.calorieLevel ?? null,
+            tags: Array.isArray(profile.tags) ? [...profile.tags] : [],
+            allergens: Array.isArray(profile.allergens) ? [...profile.allergens] : []
+          }
+        }
+        this.ruleForm.price = String(data.price)
+        this.ruleForm.status = data.status == '1'
         this.dishFlavors =
           res.data.data.flavors &&
           res.data.data.flavors.map(obj => ({
@@ -272,7 +410,7 @@ export default class SkyComponent extends Vue {
           }))
         let arr = []
         this.getLeftDishFlavors()
-        this.imageUrl = res.data.data.image
+        this.imageUrl = data.image
       } else {
         this.$message.error(res.data.msg)
       }
@@ -353,6 +491,11 @@ export default class SkyComponent extends Vue {
           this.actionType === 'add' ? 0 : this.ruleForm.status ? 1 : 0
         // params.price *= 100
         params.categoryId = this.ruleForm.categoryId
+        params.profile = {
+          ...this.ruleForm.profile,
+          tags: Array.from(new Set(this.ruleForm.profile.tags || [])),
+          allergens: Array.from(new Set(this.ruleForm.profile.allergens || []))
+        }
         params.flavors = this.dishFlavors.map(obj => ({
           ...obj,
           value: JSON.stringify(obj.value)
@@ -379,7 +522,16 @@ export default class SkyComponent extends Vue {
                     description: '',
                     dishFlavors: [],
                     status: true,
-                    categoryId: ''
+                    categoryId: '',
+                    profile: {
+                      spicyLevel: 0,
+                      sweetnessLevel: 0,
+                      saltinessLevel: 0,
+                      oilinessLevel: 0,
+                      calorieLevel: null,
+                      tags: [],
+                      allergens: []
+                    }
                   }
                   this.restKey++
                 }
@@ -421,10 +573,19 @@ export default class SkyComponent extends Vue {
   imageChange(value: any) {
     this.ruleForm.image = value
   }
+
 }
 </script>
 <style lang="scss" scoped>
 .addBrand-container {
+  .dish-form-select {
+    width: 180px;
+  }
+
+  .profile-label-select {
+    width: 350px;
+  }
+
   .el-form--inline .el-form-item__content {
     width: 293px;
   }

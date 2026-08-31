@@ -1,16 +1,24 @@
 package com.sky.controller.internal;
 
 import com.sky.context.AiRequestContext;
+import com.sky.dto.DishRecommendationRequest;
+import com.sky.dto.MealComboRecommendationRequest;
+import com.sky.service.AiDishRecommendationService;
+import com.sky.service.AiMealComboRecommendationService;
 import com.sky.service.AiOrderProgressService;
 import com.sky.service.AiShopStatusService;
 import com.sky.vo.ai.AiToolResponse;
 import com.sky.vo.ai.OrderProgressVO;
 import com.sky.vo.ai.ShopStatusVO;
+import com.sky.vo.ai.DishRecommendationResultVO;
+import com.sky.vo.ai.MealComboRecommendationResultVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,6 +32,8 @@ public class InternalAiToolController {
 
     private final AiOrderProgressService orderProgressService;
     private final AiShopStatusService shopStatusService;
+    private final AiDishRecommendationService dishRecommendationService;
+    private final AiMealComboRecommendationService mealComboRecommendationService;
 
     /**
      * 查询当前门店营业状态。即使该信息与用户无关，也沿用双 JWT 鉴权，避免形成公开旁路。
@@ -62,5 +72,37 @@ public class InternalAiToolController {
         }
         // 200 只表示工具成功拿到当前用户的订单进度；业务回答仍由上层 Agent 组织。
         return ResponseEntity.ok(AiToolResponse.success(progress, traceId));
+    }
+
+    /**
+     * 根据结构化偏好返回已完成起售、预算和过敏原校验的菜品推荐。
+     */
+    @PostMapping("/catalog/dish-recommendations")
+    public ResponseEntity<AiToolResponse<DishRecommendationResultVO>> recommendDishes(
+            @RequestBody DishRecommendationRequest request) {
+        String traceId = AiRequestContext.getTraceId();
+        try {
+            DishRecommendationResultVO result = dishRecommendationService.recommend(request);
+            return ResponseEntity.ok(AiToolResponse.success(result, traceId));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(AiToolResponse.error(
+                    "INVALID_RECOMMENDATION_PREFERENCES", ex.getMessage(), false, traceId));
+        }
+    }
+
+    /**
+     * 根据已确认的整餐总预算和人数返回经过硬约束校验的多人菜品组合。
+     */
+    @PostMapping("/catalog/meal-combinations")
+    public ResponseEntity<AiToolResponse<MealComboRecommendationResultVO>> recommendMealCombo(
+            @RequestBody MealComboRecommendationRequest request) {
+        String traceId = AiRequestContext.getTraceId();
+        try {
+            MealComboRecommendationResultVO result = mealComboRecommendationService.recommend(request);
+            return ResponseEntity.ok(AiToolResponse.success(result, traceId));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().body(AiToolResponse.error(
+                    "INVALID_RECOMMENDATION_PREFERENCES", ex.getMessage(), false, traceId));
+        }
     }
 }

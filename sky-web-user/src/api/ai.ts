@@ -137,7 +137,6 @@ export const getAiMessages = (conversationId: string, afterSequence = 0, limit =
 export interface StreamMessageInput {
   conversationId: string
   message: string
-  orderId?: number
   clientRequestId: string
   lastEventId?: string
   signal?: AbortSignal
@@ -157,7 +156,6 @@ export async function streamAiMessage(input: StreamMessageInput): Promise<void> 
       },
       body: JSON.stringify({
         message: input.message,
-        orderId: input.orderId,
         clientRequestId: input.clientRequestId,
       }),
       signal: input.signal,

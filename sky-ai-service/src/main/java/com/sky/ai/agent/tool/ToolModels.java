@@ -3,6 +3,7 @@ package com.sky.ai.agent.tool;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -37,6 +38,79 @@ public final class ToolModels {
             List<String> allowedUserActions,
             boolean trackingAvailable,
             String detailPath) {
+    }
+
+    /**
+     * 发送给业务推荐服务的结构化偏好，不包含原始文本、SQL 或用户身份。
+     */
+    public record DishRecommendationRequest(
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            Integer spicyLevelMin,
+            Integer spicyLevelMax,
+            Integer sweetnessLevelMax,
+            List<String> preferredTags,
+            List<String> excludedTags,
+            List<String> allergens,
+            Long categoryId,
+            int limit) {
+    }
+
+    /**
+     * 业务服务返回的一项可解释菜品推荐。
+     */
+    public record DishRecommendationItem(
+            Long dishId,
+            String name,
+            BigDecimal price,
+            List<String> matchedTags,
+            List<String> flavorOptions,
+            List<String> reasonCodes) {
+    }
+
+    /**
+     * 菜品推荐结果及无候选时的安全原因。
+     */
+    public record DishRecommendationResult(
+            List<DishRecommendationItem> items,
+            String emptyReason) {
+    }
+
+    /** 发送给业务服务的多人整餐组合条件。 */
+    public record MealComboRecommendationRequest(
+            BigDecimal totalBudget,
+            int peopleCount,
+            Integer spicyLevelMin,
+            Integer spicyLevelMax,
+            Integer sweetnessLevelMax,
+            List<String> preferredTags,
+            List<String> excludedTags,
+            List<String> allergens,
+            Long categoryId) {
+    }
+
+    /** 多人整餐组合中的一项菜品。 */
+    public record MealComboItem(
+            Long dishId,
+            String name,
+            BigDecimal unitPrice,
+            int quantity,
+            BigDecimal subtotal,
+            String role,
+            List<String> matchedTags,
+            List<String> flavorOptions,
+            List<String> reasonCodes) {
+    }
+
+    /** 业务服务返回的确定性多人整餐组合。 */
+    public record MealComboRecommendationResult(
+            List<MealComboItem> items,
+            BigDecimal totalPrice,
+            BigDecimal budget,
+            BigDecimal remainingBudget,
+            int peopleCount,
+            List<String> reasonCodes,
+            String emptyReason) {
     }
 
     /**

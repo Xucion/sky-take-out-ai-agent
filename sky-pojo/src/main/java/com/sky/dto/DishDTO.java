@@ -26,4 +26,7 @@ public class DishDTO implements Serializable {
     //口味
     private List<DishFlavor> flavors = new ArrayList<>();
 
+    //用于 AI 菜品推荐的标准化画像
+    private DishProfileDTO profile;
+
 }

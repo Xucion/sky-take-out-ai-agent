@@ -1,6 +1,7 @@
 package com.sky.vo;
 
 import com.sky.entity.DishFlavor;
+import com.sky.entity.DishProfile;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -36,6 +37,9 @@ public class DishVO implements Serializable {
     private String categoryName;
     //菜品关联的口味
     private List<DishFlavor> flavors = new ArrayList<>();
+
+    //用于 AI 菜品推荐的标准化画像
+    private DishProfile profile;
 
     //private Integer copies;
 }

@@ -85,7 +85,7 @@ public class StreamingChatController {
                            String lastEventId) {
         try {
             ChatModels.ChatResponse response = agentService.chat(userToken,
-                    new ChatModels.ChatRequest(conversationId, request.message(), request.orderId(),
+                    new ChatModels.ChatRequest(conversationId, request.message(),
                             request.clientRequestId()), traceId);
             sendAnswerEvents(emitter, conversationId, response, lastEventId);
             emitter.complete();

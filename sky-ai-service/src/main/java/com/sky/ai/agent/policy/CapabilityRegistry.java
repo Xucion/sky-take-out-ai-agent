@@ -28,6 +28,14 @@ public class CapabilityRegistry {
                 "get_order_progress",
                 "仅当用户询问已确认订单的进度、状态或配送情况时调用。无需参数；"
                         + "服务端会强制查询当前登录用户的该订单。"));
+        configured.put(PolicyTypes.AiCapability.RECOMMEND_DISHES, new PolicyTypes.CapabilityDefinition(
+                "recommend_dishes",
+                "仅当用户希望推荐菜品、表达价格或口味偏好时调用。无需模型提供参数；"
+                        + "应用会从会话结构化偏好中锁定预算、标签和过敏原，业务服务负责过滤排序。"));
+        configured.put(PolicyTypes.AiCapability.RECOMMEND_MEAL_COMBO, new PolicyTypes.CapabilityDefinition(
+                "recommend_meal_combo",
+                "仅当用户已经确认整顿饭总预算和用餐人数时调用。无需模型提供参数；"
+                        + "应用会锁定总预算、人数、口味和过敏原，业务服务负责组合并复核总价。"));
         definitions = Map.copyOf(configured);
     }
 

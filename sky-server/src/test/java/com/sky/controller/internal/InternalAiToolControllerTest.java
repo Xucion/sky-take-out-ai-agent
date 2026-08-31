@@ -6,7 +6,13 @@ import com.sky.interceptor.AiInternalAuthInterceptor;
 import com.sky.properties.AiInternalAuthProperties;
 import com.sky.service.AiOrderProgressService;
 import com.sky.service.AiShopStatusService;
+import com.sky.service.AiDishRecommendationService;
+import com.sky.service.AiMealComboRecommendationService;
 import com.sky.vo.ai.ShopStatusVO;
+import com.sky.vo.ai.DishRecommendationItemVO;
+import com.sky.vo.ai.DishRecommendationResultVO;
+import com.sky.vo.ai.MealComboItemVO;
+import com.sky.vo.ai.MealComboRecommendationResultVO;
 import com.sky.utils.JwtUtil;
 import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,11 +23,16 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.math.BigDecimal;
+import java.util.List;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -32,12 +43,16 @@ class InternalAiToolControllerTest {
 
     private AiOrderProgressService orderProgressService;
     private AiShopStatusService shopStatusService;
+    private AiDishRecommendationService dishRecommendationService;
+    private AiMealComboRecommendationService mealComboRecommendationService;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         orderProgressService = mock(AiOrderProgressService.class);
         shopStatusService = mock(AiShopStatusService.class);
+        dishRecommendationService = mock(AiDishRecommendationService.class);
+        mealComboRecommendationService = mock(AiMealComboRecommendationService.class);
 
         AiInternalAuthProperties properties = new AiInternalAuthProperties();
         properties.setServiceSecretKey(SERVICE_SECRET);
@@ -45,7 +60,9 @@ class InternalAiToolControllerTest {
 
         AiInternalAuthInterceptor interceptor =
                 new AiInternalAuthInterceptor(properties, new ObjectMapper());
-        InternalAiToolController controller = new InternalAiToolController(orderProgressService, shopStatusService);
+        InternalAiToolController controller = new InternalAiToolController(
+                orderProgressService, shopStatusService, dishRecommendationService,
+                mealComboRecommendationService);
 
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .addInterceptors(interceptor)
@@ -63,6 +80,49 @@ class InternalAiToolControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.status").value("OPEN"));
+    }
+
+    @Test
+    void returnsAuthenticatedDishRecommendations() throws Exception {
+        DishRecommendationItemVO item = DishRecommendationItemVO.builder()
+                .dishId(101L).name("宫保鸡丁").price(new BigDecimal("28"))
+                .matchedTags(List.of("下饭"))
+                .reasonCodes(List.of("PRICE_MATCH", "TAG_MATCH"))
+                .build();
+        when(dishRecommendationService.recommend(any())).thenReturn(
+                DishRecommendationResultVO.builder().items(List.of(item)).build());
+
+        mockMvc.perform(post("/internal/ai-tools/catalog/dish-recommendations")
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"maxPrice\":30,\"preferredTags\":[\"下饭\"],\"limit\":5}")
+                        .header("Authorization", "Bearer " + serviceToken())
+                        .header("X-AI-User-Context", userContextToken(1L, "conv-recommend")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.items[0].dishId").value(101))
+                .andExpect(jsonPath("$.data.items[0].reasonCodes[1]").value("TAG_MATCH"));
+    }
+
+    /** 验证整餐组合接口返回人数、总价和各项数量。 */
+    @Test
+    void returnsAuthenticatedMealCombo() throws Exception {
+        MealComboItemVO item = MealComboItemVO.builder().dishId(102L).name("香辣牛蛙")
+                .unitPrice(new BigDecimal("68")).quantity(1).subtotal(new BigDecimal("68"))
+                .role("MAIN").reasonCodes(List.of("SPICY_MATCH")).build();
+        when(mealComboRecommendationService.recommend(any())).thenReturn(
+                MealComboRecommendationResultVO.builder().items(List.of(item))
+                        .totalPrice(new BigDecimal("68")).budget(new BigDecimal("200"))
+                        .remainingBudget(new BigDecimal("132")).peopleCount(2).build());
+
+        mockMvc.perform(post("/internal/ai-tools/catalog/meal-combinations")
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"totalBudget\":200,\"peopleCount\":2,\"spicyLevelMin\":1}")
+                        .header("Authorization", "Bearer " + serviceToken())
+                        .header("X-AI-User-Context", userContextToken(1L, "conv-combo")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.peopleCount").value(2))
+                .andExpect(jsonPath("$.data.totalPrice").value(68))
+                .andExpect(jsonPath("$.data.items[0].quantity").value(1));
     }
 
     @Test

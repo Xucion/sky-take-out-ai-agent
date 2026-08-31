@@ -16,6 +16,7 @@ import com.sky.mapper.SetmealDishMapper;
 import com.sky.mapper.SetmealMapper;
 import com.sky.result.PageResult;
 import com.sky.service.DishService;
+import com.sky.service.DishProfileService;
 import com.sky.vo.DishVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -38,6 +39,8 @@ public class DishServiceImpl implements DishService {
     private SetmealDishMapper setmealDishMapper;
     @Autowired
     private SetmealMapper setmealMapper;
+    @Autowired
+    private DishProfileService dishProfileService;
     /**
      * 新增菜品和对应的口味
      * @param dishDTO
@@ -61,6 +64,9 @@ public class DishServiceImpl implements DishService {
             //向口味表插入n条数据
             dishFlavorMapper.insertBatch(flavors);
         }
+
+        // 菜品主键生成后，在同一事务中保存推荐画像。
+        dishProfileService.save(dishId, dishDTO.getProfile());
 
     }
 
@@ -102,6 +108,7 @@ public class DishServiceImpl implements DishService {
             dishMapper.deleteById(id);
             //删除菜品关联的口味数据
             dishFlavorMapper.deleteByDishId(id);
+            dishProfileService.deleteByDishId(id);
         }
 
     }
@@ -120,6 +127,7 @@ public class DishServiceImpl implements DishService {
         DishVO dishVO = new DishVO();
         BeanUtils.copyProperties(dish, dishVO);
         dishVO.setFlavors(flavors);
+        dishVO.setProfile(dishProfileService.getByDishId(id));
         return dishVO;
     }
 
@@ -127,6 +135,7 @@ public class DishServiceImpl implements DishService {
      * 修改菜品和对应的口味
      * @param dishDTO
      */
+    @Transactional
     public void updateWithFlavor(DishDTO dishDTO) {
         //修改菜品表数据
         Dish dish = new Dish();
@@ -144,6 +153,7 @@ public class DishServiceImpl implements DishService {
             }
             dishFlavorMapper.insertBatch(flavors);
         }
+        dishProfileService.save(dish.getId(), dishDTO.getProfile());
     }
 
     /**
