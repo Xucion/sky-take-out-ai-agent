@@ -9,16 +9,16 @@
 - 验证现有用户 JWT，并从可信 claims 中提取 `userId`；
 - 为每次工具调用签发服务 JWT 和短时用户上下文 JWT；
 - 通过 `sky-server` 查询门店状态和当前用户的一笔订单进度；
-- 通过结构化偏好调用 `sky-server` 的确定性菜品筛选和排序服务；
+- 通过结构化偏好调用 `sky-server` 的确定性菜品筛选、排序和多人整餐组合服务；
 - 通过 Flyway 管理会话、消息和工具调用审计三张 AI 专属表；
 - 提供带用户归属约束、消息幂等与工具审计状态流转的 JDBC Repository；
 - 提供创建会话、分页查询本人会话、查询本人会话详情和游标分页查询历史消息的 API；
 - 默认使用不联网的 Fake Provider；
 - 可通过 OpenAI-compatible 配置切换 Qwen；
-- Qwen 通过 Function Calling 自主选择三个只读工具，Java 层绑定认证身份、订单 ID 和推荐条件；
+- Qwen 通过 Function Calling 自主选择四个只读工具，Java 层绑定认证身份、订单 ID 和推荐条件；
 - `/api/ai/poc/chat` 已持久化用户/助手消息和脱敏工具审计，并支持请求幂等回放；
 - 提供带稳定事件 ID、幂等回放和 `Last-Event-ID` 续传的最小 SSE 消息接口；
-- 尚未包含模型原生 Token 流、反馈、人工工单和跨轮模型上下文组装。
+- 已组装最近 12 条已完成消息和受控业务上下文；尚未包含模型原生 Token 流、滚动摘要、Token 预算、反馈和人工工单。
 
 ## 代码结构
 
@@ -46,9 +46,9 @@ $env:AI_DB_USERNAME="root"
 $env:AI_DB_PASSWORD="本地数据库密码"
 $env:AI_REDIS_HOST="localhost"
 $env:AI_REDIS_PORT="6379"
-$env:SKY_USER_JWT_SECRET="与 sky-server 用户 JWT 一致的密钥"
-$env:SKY_AI_SERVICE_SECRET_KEY="至少 32 字节的内部服务密钥"
-$env:SKY_AI_USER_CONTEXT_SECRET_KEY="至少 32 字节且不同于上面的上下文密钥"
+$env:APP_AUTH_USER_JWT_SECRET="与 sky-server 用户 JWT 一致的密钥"
+$env:APP_AUTH_SERVICE_JWT_SECRET="至少 32 字节的内部服务密钥"
+$env:APP_AUTH_USER_CONTEXT_JWT_SECRET="至少 32 字节且不同于上面的上下文密钥"
 mvn -f sky-ai-service/pom.xml spring-boot:run
 ```
 
@@ -78,8 +78,8 @@ Content-Type: application/json
 
 ## Function Calling 安全边界
 
-每次请求只动态注册当前意图需要的 `get_shop_status`、`get_order_progress` 或
-`recommend_dishes`。工具都不接收模型生成的用户 ID；订单 ID 由规则层或当前会话上下文解析并锁定，
+每次请求只动态注册当前意图需要的 `get_shop_status`、`get_order_progress`、
+`recommend_dishes` 或 `recommend_meal_combo`。工具都不接收模型生成的用户 ID；订单 ID 由规则层或当前会话上下文解析并锁定，
 推荐工具参数由应用维护的结构化会话偏好生成。工具调用仍经过双内部 JWT、业务归属校验和 `ai_tool_call` 审计。
 同一轮重复选择同一工具只执行一次。
 
@@ -131,7 +131,7 @@ GET  /api/ai/conversations/{conversationId}/messages?afterSequence=0&limit=50
 `nextAfterSequence`。`/api/ai/poc/chat` 成功或失败后都可以通过该接口查询对应消息状态。
 
 `clientRequestId` 是同一会话内的请求幂等键，只允许字母、数字、点、下划线、冒号和短横线。
-相同键与相同请求会直接回放已完成回复，不再次调用模型或工具；相同键复用不同消息或订单 ID
+相同键与相同请求会直接回放已完成回复，不再次调用模型或工具；相同键复用不同消息
 会返回 `IDEMPOTENCY_CONFLICT`。
 
 ## SSE 消息接口
