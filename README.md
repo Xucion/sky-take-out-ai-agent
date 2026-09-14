@@ -1,5 +1,10 @@
 # 外卖智能客服与个性化菜品推荐 Agent
 
+> AI 服务新增 [Python 重构实现](sky-ai-service-py/README.md)：业务使用 Java，AI 使用
+> FastAPI + LangChain + LangGraph。沿用 AI 数据表；用户端已改用普通 JSON 聊天，
+> Python 服务已移除 SSE 分块接口。下文 SSE 说明及 Java AI 构建、Flyway 操作属于
+> 旧 `sky-ai-service` 实现；当前 Python 能力与启动方式请按新目录 README。
+
 基于“苍穹外卖”业务系统扩展的智能客服 Agent 项目。用户前端采用 Web 页面，并使用 MinIO 替代阿里 OSS。项目目标是让大模型在受控权限下查询实时业务数据、理解多轮上下文，并结合用户偏好完成可解释的菜品推荐。
 
 > [!IMPORTANT]

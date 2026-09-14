@@ -37,38 +37,16 @@ export interface MessagePage {
   hasMore: boolean
 }
 
-export interface MessageDeltaEvent {
-  eventId: string
-  conversationId: string
-  messageId: string
-  index: number
-  delta: string
-  createdAt: string
-}
-
-export interface MessageCompletedEvent {
-  eventId: string
-  conversationId: string
-  messageId: string
+export interface AiChatResponse {
   answer: string
+  intent: string
+  toolUsed: string | null
+  provider: string
   traceId: string
+  userMessageId: string
+  assistantMessageId: string
   replayed: boolean
-  createdAt: string
 }
-
-export interface StreamErrorEvent {
-  eventId: string
-  conversationId: string
-  code: string
-  message: string
-  traceId: string
-  createdAt: string
-}
-
-export type AiStreamEvent =
-  | { type: 'message.delta'; id: string; data: MessageDeltaEvent }
-  | { type: 'message.completed'; id: string; data: MessageCompletedEvent }
-  | { type: 'error'; id: string; data: StreamErrorEvent }
 
 export class AiApiError extends Error {
   constructor(
@@ -134,78 +112,21 @@ export const getAiMessages = (conversationId: string, afterSequence = 0, limit =
       + `?afterSequence=${afterSequence}&limit=${limit}`,
   )
 
-export interface StreamMessageInput {
+export interface ChatMessageInput {
   conversationId: string
   message: string
   clientRequestId: string
-  lastEventId?: string
   signal?: AbortSignal
-  onEvent: (event: AiStreamEvent) => void
 }
 
-export async function streamAiMessage(input: StreamMessageInput): Promise<void> {
-  const response = await fetch(
-    `${AI_API_BASE}/ai/conversations/${encodeURIComponent(input.conversationId)}/messages/stream`,
-    {
-      method: 'POST',
-      headers: {
-        Accept: 'text/event-stream',
-        'Content-Type': 'application/json',
-        authentication: authentication(),
-        ...(input.lastEventId ? { 'Last-Event-ID': input.lastEventId } : {}),
-      },
-      body: JSON.stringify({
-        message: input.message,
-        clientRequestId: input.clientRequestId,
-      }),
-      signal: input.signal,
-    },
-  )
-  if (!response.ok) throw await parseError(response)
-  if (!response.body) throw new AiApiError('浏览器不支持流式响应', 'STREAM_UNSUPPORTED')
-
-  const reader = response.body.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
-  while (true) {
-    const { value, done } = await reader.read()
-    buffer += decoder.decode(value, { stream: !done })
-    buffer = consumeSseBlocks(buffer, input.onEvent)
-    if (done) break
-  }
-  if (buffer.trim()) parseSseBlock(buffer, input.onEvent)
-}
-
-function consumeSseBlocks(buffer: string, onEvent: (event: AiStreamEvent) => void): string {
-  while (true) {
-    const lfBoundary = buffer.indexOf('\n\n')
-    const crlfBoundary = buffer.indexOf('\r\n\r\n')
-    let boundary = -1
-    let length = 2
-    if (lfBoundary >= 0 && (crlfBoundary < 0 || lfBoundary < crlfBoundary)) {
-      boundary = lfBoundary
-    } else if (crlfBoundary >= 0) {
-      boundary = crlfBoundary
-      length = 4
-    }
-    if (boundary < 0) return buffer
-    parseSseBlock(buffer.slice(0, boundary), onEvent)
-    buffer = buffer.slice(boundary + length)
-  }
-}
-
-function parseSseBlock(block: string, onEvent: (event: AiStreamEvent) => void) {
-  let type = ''
-  let id = ''
-  const data: string[] = []
-  for (const line of block.split(/\r?\n/)) {
-    if (line.startsWith('event:')) type = line.slice(6).trim()
-    else if (line.startsWith('id:')) id = line.slice(3).trim()
-    else if (line.startsWith('data:')) data.push(line.slice(5).trimStart())
-  }
-  if (!type || !data.length) return
-  const payload = JSON.parse(data.join('\n'))
-  if (type === 'message.delta' || type === 'message.completed' || type === 'error') {
-    onEvent({ type, id, data: payload } as AiStreamEvent)
-  }
+export function sendAiMessage(input: ChatMessageInput): Promise<AiChatResponse> {
+  return aiRequest<AiChatResponse>('/ai/poc/chat', {
+    method: 'POST',
+    body: JSON.stringify({
+      conversationId: input.conversationId,
+      message: input.message,
+      clientRequestId: input.clientRequestId,
+    }),
+    signal: input.signal,
+  })
 }

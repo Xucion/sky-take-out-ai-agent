@@ -6,17 +6,15 @@ import {
   createAiConversation,
   getAiConversations,
   getAiMessages,
-  streamAiMessage,
+  sendAiMessage,
   type AiConversation,
   type AiMessage,
-  type AiStreamEvent,
 } from '../api/ai'
 import { useToastStore } from '../stores/toast'
 
 interface SendAttempt {
   message: string
   clientRequestId: string
-  lastEventId?: string
   serverFailed: boolean
 }
 
@@ -139,7 +137,6 @@ async function retry(message: UiMessage) {
   const attempt = message.attempt
   if (attempt.serverFailed) {
     attempt.clientRequestId = requestId()
-    attempt.lastEventId = undefined
     attempt.serverFailed = false
   }
   message.content = ''
@@ -150,54 +147,37 @@ async function retry(message: UiMessage) {
 
 async function runAttempt(attempt: SendAttempt, assistantKey: string) {
   sending.value = true
-  activeAbort = new AbortController()
-  let receivedError: string | undefined
+  const controller = new AbortController()
+  activeAbort = controller
   try {
-    await streamAiMessage({
+    const result = await sendAiMessage({
       conversationId: activeConversationId.value,
       message: attempt.message,
       clientRequestId: attempt.clientRequestId,
-      lastEventId: attempt.lastEventId,
-      signal: activeAbort.signal,
-      onEvent: (event) => {
-        const assistant = messages.value.find((item) => item.key === assistantKey)
-        if (!assistant) return
-        attempt.lastEventId = event.id
-        applyEvent(assistant, attempt, event)
-        if (event.type === 'error') receivedError = event.data.message
-        void scrollToBottom()
-      },
+      signal: controller.signal,
     })
     const assistant = messages.value.find((item) => item.key === assistantKey)
-    if (assistant && receivedError) {
-      assistant.status = 'FAILED'
-      assistant.error = receivedError
+    if (assistant) {
+      assistant.messageId = result.assistantMessageId
+      assistant.content = result.answer
+      assistant.status = 'COMPLETED'
+      await scrollToBottom()
     }
   } catch (error) {
     if ((error as Error).name === 'AbortError') return
+    // 并发占用或网关响应无法确认结果时复用请求键；业务失败后使用新键。
+    attempt.serverFailed = error instanceof AiApiError
+      && !['REQUEST_IN_PROGRESS', 'AI_REQUEST_FAILED', 'INTERNAL_ERROR'].includes(error.code)
     const assistant = messages.value.find((item) => item.key === assistantKey)
     if (assistant) {
       assistant.status = 'FAILED'
       assistant.error = error instanceof AiApiError ? error.message : '连接中断，请重试'
     }
   } finally {
-    sending.value = false
-    activeAbort = null
-  }
-}
-
-function applyEvent(assistant: UiMessage, attempt: SendAttempt, event: AiStreamEvent) {
-  if (event.type === 'message.delta') {
-    assistant.messageId = event.data.messageId
-    assistant.content += event.data.delta
-  } else if (event.type === 'message.completed') {
-    assistant.messageId = event.data.messageId
-    assistant.content = event.data.answer
-    assistant.status = 'COMPLETED'
-  } else {
-    attempt.serverFailed = true
-    assistant.status = 'FAILED'
-    assistant.error = event.data.message
+    if (activeAbort === controller) {
+      sending.value = false
+      activeAbort = null
+    }
   }
 }
 

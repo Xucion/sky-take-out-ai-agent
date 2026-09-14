@@ -1,5 +1,9 @@
 # sky-ai-service
 
+> Python 重构版本位于 [`sky-ai-service-py`](../sky-ai-service-py/README.md)，使用
+> FastAPI、LangChain 和 LangGraph，并兼容当前 HTTP / SSE 接口及 AI 数据表。
+> 本目录保留为 Java 旧实现和迁移参照；两种 AI 服务应择一启动。
+
 独立的智能客服 PoC 服务。它有自己的 Maven 构建和 Java 21 / Spring Boot / Spring AI
 版本，不属于根项目的 Maven reactor。服务通过独立数据源访问 AI 专属表，不直接读取
 订单等交易业务表；会话级菜品推荐偏好保存在 Redis，并设置短期 TTL。
